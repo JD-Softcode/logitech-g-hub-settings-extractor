@@ -1,18 +1,18 @@
-# Logitech G Hub settings extractor
+# WoW Lights Settings Modifier for Logitech G Hub
 
-This is a small python tool to extract the json file stored inside the "settings.db" file of the Logitech G Hub app. This allows you to update the json and then replace the file blob inside the db with the new json.
+Python tool to extract the json file stored inside the "settings.db" file of the Logitech G Hub app. It is then modified to create custom small sampling regions for use with WoW Lights add-on for World of Warcraft.
 
 ## Requirements
 
-Tested on Windows and macOS.
+Tested on (NOT YET Windows and) macOS.
 
-You need [Python](https://www.python.org/downloads/) installed. I've tested with 3.9 but I think 2.x versions should work too.
+You need [Python](https://www.python.org/downloads/) installed. I've tested with 3.8.9.
 
 ## How to use
 
-Simply follow the instructions after executing the py file.
+Simply follow the instructions after executing the py file. Full instructions are in work
 
-### Windows
+### Windows (TBD)
 
 In a cmd or PowerShell window, type the following in the same folder as the py file.
 
@@ -28,5 +28,5 @@ Open [Terminal](https://support.apple.com/guide/terminal/open-or-quit-terminal-a
 
 ```
 cd path/where/you/downloaded/the/py/file
-python ghub-settings.py
+python3 wlights-ghub-settings.py
 ```
