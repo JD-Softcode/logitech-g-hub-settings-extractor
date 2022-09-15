@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Part of WoW Lights from JD*Softcode      http://www.jdsoftcode.net      Copyright 2022
+APP_VERSION = 0.1
 # Part of this program was made with code from:
 # https://github.com/gabfv/logitech-g-hub-settings-extractor
 # https://pynative.com/python-sqlite-blob-insert-and-retrieve-digital-data/
+# Released under the terms of the MIT Licence.
 
 import datetime
 import os
@@ -15,93 +18,6 @@ os.environ["TK_SILENCE_DEPRECATION"] = "1"
 from tkinter import *
 
 DEFAULT_FOLDER_LG_GHUB_SETTINGS = None
-
-
-print("\n\nHi. This program will modify your G Hub preferences file to make it work with WoW Lights.")
-print("Before proceeding you must prepare a World of Warcraft game profile in G Hub. Steps:")
-print("\n")
-print("Step : In G Hub, create a keyboard lighting profile for World of Warcraft.")
-print("Step : Set the profile to use the Screen Sampler built-in lighting effect.")
-print("Step : Click the \"Edit\" button to change the arrangement of the five default sampling regions.")
-print("Step : Rename the default regions to be called wl11, wl12, wl13, wl14, and wl15. That's a lowercase W followed by L (for WoW Lights)")
-print("Step : You need to Add a region and name it wl16. The location and size of the new region doesn't matter.")
-print("Step : Add six more sampling regions named wl21, wl22, wl23, wl24, wl25, and wl26. Locations and sizes don't matter.")
-print("Step : Add six more sampling regions named wl31 through wl36.")
-print("Step : Close the screen sampler editor window.")
-print("Step : Click on each one of the 18 regions you created and edit the keys affected by each one. See the picture included with this download.")
-print("Step : Completely quit G Hub. Don't just close the window. Ensure G Hub is completely shut down (no control of your lights)")
-print(" ")
-confirmed = input("Confirm all steps are complete by pressing y and ENTER.  ")
-if "y" not in confirmed and "Y" not in confirmed :
-    print("Complete the required steps and re-run this program.")
-    exit(9)
-
-rootUI = Tk()
-monitor_height = rootUI.winfo_screenheight()
-monitor_width = rootUI.winfo_screenwidth()
-rootUI.withdraw() # make the default UI window disappear
-
-print("""
-
-For systems with high-DPI screens (retina displays), enter the "apparent" resolution of your screen.
-On Mac, that appears as the "Looks like" size in the Displays control panel scaling section
-On Windows, that appears as the XXX in the Display control panel ZZZ section
-
-""")
-
-print("Detected your screen width as " + str(monitor_width))
-widthScrStr = input("Enter the horizontal size (width) of your WoW game screen in pixels, or press enter to use "+str(monitor_width)+" : ")
-if widthScrStr == "":
-    widthScr = monitor_width
-elif not widthScrStr.isdigit():
-    print("That is not a valid number. Try again.")
-    exit(9)
-else:
-    widthScr = int(widthScrStr) 
-if widthScr < 640 or widthScr > 9000:
-    print(str(widthScr) + " is not a valid value. Try again.")
-    exit(9)
-
-
-print("\nDetected your screen height as " + str(monitor_height))
-heightScrStr = input("Enter the vertical size (height) of your WoW game screen in pixels, or press enter to use "+str(monitor_height)+" : ")
-if heightScrStr == "":
-    heightScr = monitor_height
-elif not heightScrStr.isdigit():
-    print("That is not a valid number. Try again.")
-    exit(9)
-else:
-    heightScr = int(heightScrStr)   
-if heightScr < 480 or heightScr > 5000:
-    print(str(heightScr) + " is not a valid value. Try again.")
-    exit(9)
-    
-print("\nUsing screen size of "+str(widthScr)+"x"+str(heightScr))
-
-gridSize = 5
-tops = {}
-bottoms = {}
-lefts = {}
-rights = {}
-
-for row in range(3):
-    sqBot = heightScr - gridSize * (2-row)
-    sqTop = sqBot - gridSize
-    for col in range(6):
-        sqLft = gridSize * col
-        sqRit = sqLft + gridSize
-        
-        key = "wl" + str(row+1) + str(col+1)        
-        tops[key] = sqTop/heightScr
-        bottoms[key] = (heightScr-sqBot)/heightScr
-        lefts[key] = sqLft/widthScr
-        rights[key] = (widthScr-sqRit)/widthScr
-
-#for s in range(18):
-#   print(str(tops[s])+", "+str(bottoms[s])+", "+str(lefts[s])+", "+str(rights[s]))
-
-
-
 
 if sys.platform.startswith('win'): # Windows
     DEFAULT_FOLDER_LG_GHUB_SETTINGS = os.path.expandvars('%LOCALAPPDATA%/LGHUB/') # Must end with /
@@ -126,7 +42,7 @@ def make_backup(file_path):
     try:
         shutil.copy(file_path, backup_file_path)
         backup_message = """
-A backup of the settings.db file has been made to:
+A backup of the G Hub settings.db file has been made to:
 {backup_file_path}        
         """
         print(backup_message.format(backup_file_path=backup_file_path))
@@ -136,9 +52,10 @@ ERROR: Failed to make a backup of the settings.db file! From:
 {source_path}
 To:
 {destination_path}
-Since this is a critical failure, the program will quit.
 Error:
 {exception_message}
+
+Since this is a critical failure, the program will quit.
         """
         print(error_message.format(source_path=file_path, destination_path=backup_file_path, exception_message=error))
         exit(42)
@@ -218,9 +135,10 @@ def convert_to_binary_data(file_path):
         error_message = """
 ERROR: Failed to read the following file:
 {file_path}
-This program will quit.
 Error:
 {exception_message}
+
+The G Hub settings have been left unmodified.
         """
         print(error_message.format(file_path=file_path, exception_message=error))
         exit(24)
@@ -252,7 +170,7 @@ def verify_sample_regions(prefData):
         content = json.load(f)
     
         if len(content) < 10:
-            print("The G Hub preferences file appears to be too short and it's not safe to continue.")
+            print("The G Hub preferences file appears to be too short. To be safe, we'll stop here.")
             return 9
     
         for topKey in content:
@@ -274,7 +192,7 @@ def verify_sample_regions(prefData):
                                 print("Good format of the G Hub preferences file!")
                                 return 0
 
-    print("Could not locate a lighting profile in the preferences file containing 18 screen sampler regions named wl11 to wl36")
+    print("Could not locate a lighting profile in the G Hub preferences containing 18 screen sampler regions named wl11 to wl36")
     return 9                                    
 
             
@@ -301,13 +219,14 @@ def modify_sample_regions(prefData, prefDataMod):
                                     this["left"] = lefts[thisName]
                                     this["right"] = rights[thisName]
                             totalSamplerEffectsChanged = totalSamplerEffectsChanged + 1
-                            # don't return; allow all 18-segment screen samplers to be changed
-                            
-        with open(prefDataMod,'w') as j:
-#       with open(prefDataMod,mode='w',encoding='utf-8') as j:
-            json.dump(content,j,indent = 2,ensure_ascii=False)
+                            # continue the loop changing all 18-segment screen samplers with the correct names
+
+        # After changing everything, create a file with the modified preferences:                            
+        with open( prefDataMod, 'w' ) as j:
+        # with open( prefDataMod, mode='w', encoding='utf-8' ) as j:
+            json.dump( content, j, indent = 2, ensure_ascii=False )
             return totalSamplerEffectsChanged
-    print("Encountered read or write error with the modified preferences.\n")
+    print("Encountered a read or write error with the editable preference files.\n")
     return -1
 
 
@@ -316,34 +235,125 @@ if __name__ == '__main__':
         failure_to_find_settings_db = """
 ERROR: The file settings.db was not found! The path below was checked:
 {path}
-Quitting...
+The G Hub settings have been left unmodified.
         """
         print(failure_to_find_settings_db.format(path=DEFAULT_PATH_SETTINGS_DB))
         exit(10)
 
-    print("Extracting the settings from the database...")
+    print("\nWoW Lights G Hub Settings, version ", APP_VERSION)
+    print("""
+    
+Hi. This program will modify your G Hub preferences file to make it work with WoW Lights.
+Before proceeding you must prepare a World of Warcraft game profile in G Hub following these steps:
+
+Step 1: In G Hub, create a keyboard lighting profile for World of Warcraft.
+Step 2: Set the profile to use the Screen Sampler built-in lighting effect.
+Step 3: Click the \"Edit\" button to change the arrangement of the five default sampling regions.
+Step 4: Rename the default regions to be called wl11, wl12, wl13, wl14, and wl15. That's a lowercase W followed by L (for 
+        WoW Lights)
+Step 5: You need to Add a region and name it wl16. The location and size of the new region doesn't matter.
+Step 6: Add six more sampling regions named wl21, wl22, wl23, wl24, wl25, and wl26. Locations and sizes don't matter.
+Step 7: Add six more sampling regions named wl31 through wl36.
+Step 8: Close the screen sampler editor window.
+Step 9: Click on each one of the 18 regions you created and edit the keys affected by each one. See the picture included 
+        with this download.
+Step 10: Completely quit G Hub. Don't just close the window!
+         Ensure G Hub is completely shut down (no control of your lights)
+    """)
+
+    confirmed = input("Confirm all steps are complete by pressing y and ENTER.  ")
+    if "y" not in confirmed and "Y" not in confirmed :
+        print("\nComplete the required steps and re-run this program.\n")
+        exit(9)
+
+    rootUI = Tk()
+    monitor_height = rootUI.winfo_screenheight()
+    monitor_width = rootUI.winfo_screenwidth()
+    rootUI.withdraw() # make the default UI window disappear
+
+    print("""
+
+    For systems with high-DPI screens (retina displays), enter the "apparent" resolution of your screen.
+    On Mac, that appears as the "Looks like" size in the Displays control panel scaling section.
+    On Windows, that appears as the XXX in the Display control panel ZZZ section.
+    
+    Also note, G Hub only allows sampling your main screen. You must play WoW on your main screen to use WoW Lights.
+
+    """)
+
+    print("Detected your screen width as ",monitor_width)
+    widthScrStr = input("Enter the horizontal size (width) of your main screen in pixels, or press enter to use "+str(monitor_width)+" : ")
+    if widthScrStr == "":
+        widthScr = monitor_width
+    elif not widthScrStr.isdigit():
+        print("That is not a valid number. Try again.")
+        exit(9)
+    else:
+        widthScr = int(widthScrStr) 
+    if widthScr < 1024 or widthScr > 9000:
+        print(str(widthScr) + " is not a valid value. Try again.")
+        exit(9)
+
+    print("\nDetected your screen height as ",monitor_height)
+    heightScrStr = input("Enter the vertical size (height) of your main screen in pixels, or press enter to use "+str(monitor_height)+" : ")
+    if heightScrStr == "":
+        heightScr = monitor_height
+    elif not heightScrStr.isdigit():
+        print("That is not a valid number. Try again.")
+        exit(9)
+    else:
+        heightScr = int(heightScrStr)   
+    if heightScr < 768 or heightScr > 5000:
+        print(str(heightScr) + " is not a valid value. Try again.")
+        exit(9)
+    
+    print("\nUsing screen size of ", widthScr, " by ", heightScr)
+
+    gridSize = 5 # the smallest screen area G Hub will sample, 5x5 pixels
+    
+    # Create collections for the sample region coordinates
+    tops = {}
+    bottoms = {}
+    lefts = {}
+    rights = {}
+
+    # Generate the coordinates of the 6x3 screen sample regions
+    for row in range(3): # 0-2
+        sqBot = heightScr - gridSize * (2-row)
+        sqTop = sqBot - gridSize
+        for col in range(6): # 0-5
+            sqLft = gridSize * col
+            sqRit = sqLft + gridSize
+            key = "wl" + str(row+1) + str(col+1)        
+            tops[key] = sqTop / heightScr
+            bottoms[key] = ( heightScr - sqBot ) / heightScr
+            lefts[key] = sqLft / widthScr
+            rights[key] = ( widthScr - sqRit ) / widthScr
+    #for s in range(18):
+    #   print(str(tops[s])+", "+str(bottoms[s])+", "+str(lefts[s])+", "+str(rights[s]))
+
+    print("Extracting the existing settings from the database...")
     latest_id = get_latest_id(DEFAULT_PATH_SETTINGS_DB)
     file_written = read_blob_data(latest_id, DEFAULT_PATH_SETTINGS_DB)
-    make_backup(DEFAULT_PATH_SETTINGS_DB)
     file_modded = DEFAULT_FOLDER_LG_GHUB_SETTINGS + DEFAULT_MODDED_FILENAME_SETTINGS_JSON
+    make_backup(DEFAULT_PATH_SETTINGS_DB)
     
     editError = verify_sample_regions(file_written)
     
     if editError != 0:
         print("\nNothing will be changed until this is corrected and this program is run again.")
-        exit(0)
+        exit(editError)
     
-    print("\nChanging coordinates of the 18 screen scan regions...\n")
+    print("\nChanging coordinates of the 18 screen sampler regions...\n")
     
     samplesChanged = modify_sample_regions(file_written, file_modded)
     
-    print("Screen sampler preset groups changed: ",samplesChanged)
+    print("Number of screen sampler preset groups changed: ", samplesChanged)
     
     if samplesChanged > 0:    
         insert_blob(latest_id, file_modded, DEFAULT_PATH_SETTINGS_DB)
-        print("\nThe G Hub settings have been updated. You can restart G Hub now.")
+        print("\nThe G Hub settings have been updated. You can restart G Hub now.\n")
     else:
-        print("\nThe G Hub settings have been left unmodified.")
+        print("\nThe G Hub settings have been left unmodified.\n")
         
     exit(0)
-    
