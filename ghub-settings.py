@@ -185,6 +185,7 @@ Press Enter to continue.
         os.system('open "' + file_written + '"')
     else:
         print(file_written)
+    input()
     insert_blob(latest_id, file_written, DEFAULT_PATH_SETTINGS_DB)
     print("The settings have been updated.")
     exit(0)
