@@ -20,7 +20,7 @@ from tkinter import *
 DEFAULT_FOLDER_LG_GHUB_SETTINGS = None
 
 if sys.platform.startswith('win'): # Windows
-    DEFAULT_FOLDER_LG_GHUB_SETTINGS = os.path.expandvars('%LOCALAPPDATA%\LGHUB\')
+    DEFAULT_FOLDER_LG_GHUB_SETTINGS = os.path.expandvars('%LOCALAPPDATA%\\LGHUB\\')
 elif sys.platform.startswith('darwin'): # MacOS
     DEFAULT_FOLDER_LG_GHUB_SETTINGS = os.path.expandvars('$HOME/Library/Application Support/lghub/')
 else:
@@ -319,17 +319,19 @@ Step 10: Completely quit G Hub. Don't just close the window!
     # Generate the coordinates of the 6x3 screen sample regions
     hScale = 1.0 # good for Mac
     winShift = 0 # no shift for Mac
+    winAdd = 0
     if sys.platform.startswith('win'):
         hScale = 1.2
         winShift = 2
+        winAdd = 1
 
     for row in range(3): # 0-2
         sqBot = heightScr - gridSize * (2-row)
-        sqTop = sqBot - gridSize + 1    # +1 might be for windows only
+        sqTop = sqBot - gridSize + winAdd
         for col in range(6): # 0-5
             sqLft = hScale * gridSize * col + winShift
             #sqRit = sqLft + gridSize
-            sqRit = hScale * (gridSize * (col + 1) - 1) + winShift
+            sqRit = hScale * (gridSize * (col + 1) - winAdd) + winShift
             key = "wl" + str(row+1) + str(col+1)        
             tops[key] = sqTop / heightScr
             bottoms[key] = ( heightScr - sqBot ) / heightScr
