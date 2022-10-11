@@ -20,9 +20,9 @@ from tkinter import *
 DEFAULT_FOLDER_LG_GHUB_SETTINGS = None
 
 if sys.platform.startswith('win'): # Windows
-    DEFAULT_FOLDER_LG_GHUB_SETTINGS = os.path.expandvars('%LOCALAPPDATA%/LGHUB/') # Must end with /
+    DEFAULT_FOLDER_LG_GHUB_SETTINGS = os.path.expandvars('%LOCALAPPDATA%\LGHUB\')
 elif sys.platform.startswith('darwin'): # MacOS
-    DEFAULT_FOLDER_LG_GHUB_SETTINGS = os.path.expandvars('$HOME/Library/Application Support/lghub/') # Must end with /
+    DEFAULT_FOLDER_LG_GHUB_SETTINGS = os.path.expandvars('$HOME/Library/Application Support/lghub/')
 else:
     error_message = """
 ERROR: Unsupported platform
@@ -248,15 +248,14 @@ Before proceeding you must prepare a World of Warcraft game profile in G Hub fol
 
 Step 1: In G Hub, create a keyboard lighting profile for World of Warcraft.
 Step 2: Set the profile to use the Screen Sampler built-in lighting effect.
-Step 3: Click the \"Edit\" button to change the arrangement of the five default sampling regions.
+Step 3: Click the \"Edit\" button to edit the five default sampling regions.
 Step 4: Rename the default regions to be called wl11, wl12, wl13, wl14, and wl15. That's a lowercase W followed by L (for 
         WoW Lights)
 Step 5: You need to Add a region and name it wl16. The location and size of the new region doesn't matter.
 Step 6: Add six more sampling regions named wl21, wl22, wl23, wl24, wl25, and wl26. Locations and sizes don't matter.
 Step 7: Add six more sampling regions named wl31 through wl36.
 Step 8: Close the screen sampler editor window.
-Step 9: Click on each one of the 18 regions you created and edit the keys affected by each one. See the picture included 
-        with this download.
+Step 9: Assign appropriate keys to each of the 18 regions you created. See the picture in the instructions sheet.
 Step 10: Completely quit G Hub. Don't just close the window!
          Ensure G Hub is completely shut down (no control of your lights)
     """)
@@ -275,7 +274,7 @@ Step 10: Completely quit G Hub. Don't just close the window!
 
     For systems with high-DPI screens (retina displays), enter the "apparent" resolution of your screen.
     On Mac, that appears as the "Looks like" size in the Displays control panel scaling section.
-    On Windows, that appears as the XXX in the Display control panel ZZZ section.
+    On Windows, that appears as the "Display resolution" in the Display control panel "Scale and layout" section.
     
     Also note, G Hub only allows sampling your main screen. You must play WoW on your main screen to use WoW Lights.
 
@@ -318,12 +317,19 @@ Step 10: Completely quit G Hub. Don't just close the window!
     rights = {}
 
     # Generate the coordinates of the 6x3 screen sample regions
+    hScale = 1.0 # good for Mac
+    winShift = 0 # no shift for Mac
+    if sys.platform.startswith('win'):
+        hScale = 1.2
+        winShift = 2
+
     for row in range(3): # 0-2
         sqBot = heightScr - gridSize * (2-row)
-        sqTop = sqBot - gridSize
+        sqTop = sqBot - gridSize + 1    # +1 might be for windows only
         for col in range(6): # 0-5
-            sqLft = gridSize * col
-            sqRit = sqLft + gridSize
+            sqLft = hScale * gridSize * col + winShift
+            #sqRit = sqLft + gridSize
+            sqRit = hScale * (gridSize * (col + 1) - 1) + winShift
             key = "wl" + str(row+1) + str(col+1)        
             tops[key] = sqTop / heightScr
             bottoms[key] = ( heightScr - sqBot ) / heightScr
