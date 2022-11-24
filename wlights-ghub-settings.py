@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Part of WoW Lights from JD*Softcode      http://www.jdsoftcode.net      Copyright 2022
-APP_VERSION = 0.1
+APP_VERSION = 1.0
 # Part of this program was made with code from:
 # https://github.com/gabfv/logitech-g-hub-settings-extractor
 # https://pynative.com/python-sqlite-blob-insert-and-retrieve-digital-data/
+# https://docs.python.org/3/howto/argparse.html
 # Released under the terms of the MIT Licence.
 
 import datetime
@@ -13,9 +14,19 @@ import sys
 import shutil
 import sqlite3
 import json
+import argparse
 
 os.environ["TK_SILENCE_DEPRECATION"] = "1"
 from tkinter import *
+
+parser = argparse.ArgumentParser(description = """
+These options are for advanced troubleshooting and usually not required.
+Please read instructions.""")
+parser.add_argument("-s", "--shift", default=0, help="shift scan region horizontally", type=int)
+parser.add_argument("-a", "--aspect", default=1.0, help="modify aspect ratio of scan regions", type=float)
+parser.add_argument("-g", "--gridsize", default=5, help="height of the individual scan regions", type=int)
+parser.add_argument("-b", "--buffer", default=0, help="buffer on edge of individual scan regions", type=int)
+args = parser.parse_args()
 
 DEFAULT_FOLDER_LG_GHUB_SETTINGS = None
 
@@ -308,8 +319,6 @@ Step 10: Completely quit G Hub. Don't just close the window!
     
     print("\nUsing screen size of ", widthScr, " by ", heightScr)
 
-    gridSize = 5 # the smallest screen area G Hub will sample, 5x5 pixels
-    
     # Create collections for the sample region coordinates
     tops = {}
     bottoms = {}
@@ -317,21 +326,18 @@ Step 10: Completely quit G Hub. Don't just close the window!
     rights = {}
 
     # Generate the coordinates of the 6x3 screen sample regions
-    hScale = 1.0 # good for Mac
-    winShift = 0 # no shift for Mac
-    winAdd = 0
-    if sys.platform.startswith('win'):
-        hScale = 1.2
-        winShift = 2
-        winAdd = 1
+    gridSize = args.gridsize
+    hScale = args.aspect
+    scanShift = args.shift
+    scanMargin = args.buffer
 
     for row in range(3): # 0-2
         sqBot = heightScr - gridSize * (2-row)
-        sqTop = sqBot - gridSize + winAdd
+        sqTop = sqBot - gridSize + scanMargin
         for col in range(6): # 0-5
-            sqLft = hScale * gridSize * col + winShift
+            sqLft = hScale * gridSize * col + scanShift
             #sqRit = sqLft + gridSize
-            sqRit = hScale * (gridSize * (col + 1) - winAdd) + winShift
+            sqRit = hScale * (gridSize * (col + 1) - scanMargin) + scanShift
             key = "wl" + str(row+1) + str(col+1)        
             tops[key] = sqTop / heightScr
             bottoms[key] = ( heightScr - sqBot ) / heightScr
