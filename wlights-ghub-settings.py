@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Part of WoW Lights from JD*Softcode      http://www.jdsoftcode.net      Copyright 2022
-APP_VERSION = 1.0
+# Part of WoW Lights from JD*Softcode      http://www.jdsoftcode.net      Copyright 2022-2024
+APP_VERSION = 2.0
 # Part of this program was made with code from:
 # https://github.com/gabfv/logitech-g-hub-settings-extractor
 # https://pynative.com/python-sqlite-blob-insert-and-retrieve-digital-data/
@@ -15,6 +15,8 @@ import shutil
 import sqlite3
 import json
 import argparse
+import uuid
+import copy
 
 os.environ["TK_SILENCE_DEPRECATION"] = "1"
 from tkinter import *
@@ -45,6 +47,7 @@ ERROR: Unsupported platform
 DEFAULT_FILENAME_SETTINGS_DB = 'settings.db'
 DEFAULT_FILENAME_SETTINGS_JSON = 'wow_lights_prior.json'
 DEFAULT_MODDED_FILENAME_SETTINGS_JSON = 'wow_lights_changed.json'
+DEFAULT_ADDED_RGNS_FILENAME_SETTINGS_JSON = 'wow_lights_13added.json'
 DEFAULT_PATH_SETTINGS_DB = DEFAULT_FOLDER_LG_GHUB_SETTINGS + DEFAULT_FILENAME_SETTINGS_DB
 
 
@@ -71,6 +74,7 @@ Since this is a critical failure, the program will quit.
         print(error_message.format(source_path=file_path, destination_path=backup_file_path, exception_message=error))
         exit(42)
 
+# Utility to get the handle to the latest bundle of G-Hub settings in the Logitech settings database
 def get_latest_id(file_path):
     sqlite_connection = 0
     try:
@@ -176,7 +180,7 @@ def insert_blob(data_id, updated_settings_file_path, db_file_path):
             sqlite_connection.close()
    
             
-def verify_sample_regions(prefData):
+def verify_sample_regions(prefData, rgnCountRqdToMatch):
     with open(prefData) as f:
         content = json.load(f)
     
@@ -192,7 +196,7 @@ def verify_sample_regions(prefData):
                         for region in content[topKey]["screenSamplerInfo"]["regionMap"]:
                             regions = regions + 1
                         
-                        if regions == 18:
+                        if regions == rgnCountRqdToMatch:
                             allGoodNames = True
                             for region in content[topKey]["screenSamplerInfo"]["regionMap"]:
                                 key = content[topKey]["screenSamplerInfo"]["regionMap"][region]["name"]
@@ -200,10 +204,10 @@ def verify_sample_regions(prefData):
                                     allGoodNames = False
                             
                             if allGoodNames:
-                                print("Good format of the G Hub preferences file!")
+                                print("\nGood format of the G Hub preferences file with "+str(rgnCountRqdToMatch)+" regions")
                                 return 0
 
-    print("Could not locate a lighting profile in the G Hub preferences containing 18 screen sampler regions named wl11 to wl36")
+    print("Could not locate a lighting profile in the G Hub preferences containing "+str(rgnCountRqdToMatch)+" screen sampler regions named properly.")
     return 9                                    
 
             
@@ -220,6 +224,7 @@ def modify_sample_regions(prefData, prefDataMod):
                         regions = 0
                         for region in content[topKey]["screenSamplerInfo"]["regionMap"]:
                             regions = regions + 1
+
                         if regions == 18:
                             for region in content[topKey]["screenSamplerInfo"]["regionMap"]:
                                 this = content[topKey]["screenSamplerInfo"]["regionMap"][region]
@@ -239,7 +244,43 @@ def modify_sample_regions(prefData, prefDataMod):
             return totalSamplerEffectsChanged
     print("Encountered a read or write error with the editable preference files.\n")
     return -1
+    
+def add_sample_regions(prefData, prefDataMod):
+    with open(prefData) as f:
+        content = json.load(f)
+    
+        totalSamplerEffectsChanged = 0
+        
+        for topKey in content:
+            if "lighting_effects" in topKey:
+                if "screenSamplerInfo" in content[topKey]:
+                    if "regionMap" in content[topKey]["screenSamplerInfo"]:
+                        regions = 0
+                        for region in content[topKey]["screenSamplerInfo"]["regionMap"]:
+                            regions = regions + 1
 
+                        if regions == 5:
+                            templateLine = content[topKey]["screenSamplerInfo"]["regionMap"][list(content[topKey]["screenSamplerInfo"]["regionMap"])[0]]
+
+                            missingNames = [                            "wl16",
+                                "wl21", "wl22", "wl23", "wl24", "wl25", "wl26",
+                                "wl31", "wl32", "wl33", "wl34", "wl35", "wl36"]
+                            
+                            for addedName in missingNames:
+                                newItem = copy.deepcopy(templateLine)
+                                newID = uuid.uuid1()
+                                newItem["name"] = addedName
+                                newItem["id"] = str(newID)
+                                content[topKey]["screenSamplerInfo"]["regionMap"][str(newID)] = newItem
+                                totalSamplerEffectsChanged = totalSamplerEffectsChanged + 1
+
+        # After changing everything, create a file with the modified preferences:
+        with open( prefDataMod, 'w' ) as j:
+        # with open( prefDataMod, mode='w', encoding='utf-8' ) as j:
+            json.dump( content, j, indent = 2, ensure_ascii=False )
+            return totalSamplerEffectsChanged
+    print("Encountered a read or write error with the editable preference files.\n")
+    return -1
 
 if __name__ == '__main__':
     if not os.path.exists(DEFAULT_PATH_SETTINGS_DB):
@@ -262,13 +303,9 @@ Step 2: Set the profile to use the Screen Sampler built-in lighting effect.
 Step 3: Click the \"Edit\" button to edit the five default sampling regions.
 Step 4: Rename the default regions to be called wl11, wl12, wl13, wl14, and wl15. That's a lowercase W followed by L (for 
         WoW Lights)
-Step 5: You need to Add a region and name it wl16. The location and size of the new region doesn't matter.
-Step 6: Add six more sampling regions named wl21, wl22, wl23, wl24, wl25, and wl26. Locations and sizes don't matter.
-Step 7: Add six more sampling regions named wl31 through wl36.
-Step 8: Close the screen sampler editor window.
-Step 9: Assign appropriate keys to each of the 18 regions you created. See the picture in the instructions sheet.
-Step 10: Completely quit G Hub. Don't just close the window!
-         Ensure G Hub is completely shut down (no control of your lights)
+Step 5: Close the screen sampler editor window.
+Step 6: **Completely quit G Hub.** Don't just close the window!
+		Ensure G Hub is completely shut down (no control of your lights)
     """)
 
     confirmed = input("Confirm all steps are complete by pressing y and ENTER.  ")
@@ -349,14 +386,27 @@ Step 10: Completely quit G Hub. Don't just close the window!
     print("Extracting the existing settings from the database...")
     latest_id = get_latest_id(DEFAULT_PATH_SETTINGS_DB)
     file_written = read_blob_data(latest_id, DEFAULT_PATH_SETTINGS_DB)
+    file_extended = DEFAULT_FOLDER_LG_GHUB_SETTINGS + DEFAULT_ADDED_RGNS_FILENAME_SETTINGS_JSON
     file_modded = DEFAULT_FOLDER_LG_GHUB_SETTINGS + DEFAULT_MODDED_FILENAME_SETTINGS_JSON
     make_backup(DEFAULT_PATH_SETTINGS_DB)
     
-    editError = verify_sample_regions(file_written)
-    
-    if editError != 0:
-        print("\nNothing will be changed until this is corrected and this program is run again.")
-        exit(editError)
+    edit18Error = verify_sample_regions(file_written, 18)
+
+    if edit18Error != 0:
+        edit5Error = verify_sample_regions(file_written, 5)
+        
+        if edit5Error != 0:
+           print("\nNothing will be changed until this is corrected and this program is run again.")
+           exit(edit5Error)
+        
+        print("\nAdding 13 additional screen sampler regions to the profile...")
+        addCount = add_sample_regions(file_written, file_extended)
+        
+        if addCount < 0:
+            print("\nDue to the error, the G Hub settings will be left unmodified.\n")
+            exit(addCount)
+        
+        file_written = file_extended
     
     print("\nChanging coordinates of the 18 screen sampler regions...\n")
     
@@ -364,7 +414,7 @@ Step 10: Completely quit G Hub. Don't just close the window!
     
     print("Number of screen sampler preset groups changed: ", samplesChanged)
     
-    if samplesChanged > 0:    
+    if samplesChanged > 0:
         insert_blob(latest_id, file_modded, DEFAULT_PATH_SETTINGS_DB)
         print("\nThe G Hub settings have been updated. You can restart G Hub now.\n")
     else:
