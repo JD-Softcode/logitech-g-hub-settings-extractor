@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Part of WoW Lights from JD*Softcode      http://www.jdsoftcode.net      Copyright 2022-2024
 APP_VERSION = 2.0
-# Part of this program was made with code from:
+# Parts of this program were made with code from:
 # https://github.com/gabfv/logitech-g-hub-settings-extractor
 # https://pynative.com/python-sqlite-blob-insert-and-retrieve-digital-data/
 # https://docs.python.org/3/howto/argparse.html
@@ -78,7 +78,7 @@ Since this is a critical failure, the program will quit.
 def get_latest_id(file_path):
     sqlite_connection = 0
     try:
-        sqlite_connection = sqlite3.connect(file_path)
+        sqlite_connection = connect_to_database(file_path)
         cursor = sqlite_connection.cursor()
 
         sql_get_latest_id = 'select MAX(_id) from DATA'
@@ -120,7 +120,7 @@ Error:
 def read_blob_data(data_id, file_path):
     sqlite_connection = 0
     try:
-        sqlite_connection = sqlite3.connect(file_path)
+        sqlite_connection = connect_to_database(file_path)
         cursor = sqlite_connection.cursor()
 
         sql_fetch_blob_query = """SELECT _id, FILE from DATA where _id = ?"""
@@ -162,7 +162,7 @@ The G Hub settings have been left unmodified.
 def insert_blob(data_id, updated_settings_file_path, db_file_path):
     sqlite_connection = 0
     try:
-        sqlite_connection = sqlite3.connect(db_file_path)
+        sqlite_connection = connect_to_database(db_file_path)
         cursor = sqlite_connection.cursor()
         sqlite_replace_blob_query = """ Replace INTO DATA
                                   (_id, _date_created, FILE) VALUES (?, ?, ?)"""
@@ -179,7 +179,21 @@ def insert_blob(data_id, updated_settings_file_path, db_file_path):
         if sqlite_connection:
             sqlite_connection.close()
    
-            
+
+def connect_to_database(db_path):
+    wal_mode = os.path.exists(db_path + '-wal') and os.path.exists(db_path + '-shm')
+
+    connection = sqlite3.connect(db_path)
+
+    # check if WAL mode is enabled (usually after LG G Hub has been updated past 2024.6.6*)
+    if wal_mode:
+        connection.execute('PRAGMA journal_mode=WAL;')
+    else:
+        connection.execute('PRAGMA journal_mode=DELETE;')
+
+    return connection
+
+
 def verify_sample_regions(prefData, rgnCountRqdToMatch):
     with open(prefData) as f:
         content = json.load(f)
