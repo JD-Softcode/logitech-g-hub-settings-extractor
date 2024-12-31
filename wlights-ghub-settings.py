@@ -195,7 +195,6 @@ def connect_to_database(db_path):
 
 
 def count_sample_regions(prefData, rgnCountRqdToMatch):
-
     numBlocksFound = 0
     
     with open(prefData) as f:
@@ -224,44 +223,10 @@ def count_sample_regions(prefData, rgnCountRqdToMatch):
                                 print("\nGood format of the G Hub preferences file with "+str(rgnCountRqdToMatch)+" regions")
                                 numBlocksFound = numBlocksFound + 1
         
-        print("Found " + str(numBlocksFound) + " instance(s) of " + str(rgnCountRqdToMatch) + " item regions.")
+        print("Found " + str(numBlocksFound) + " instance(s) of " + str(rgnCountRqdToMatch) + "-item regions.")
         return numBlocksFound
 
 
-def modify_sample_regions(prefData, prefDataMod):
-    with open(prefData) as f:
-        content = json.load(f)
-    
-        totalSamplerEffectsChanged = 0
-        
-        for topKey in content:
-            if "lighting_effects" in topKey:
-                if "screenSamplerInfo" in content[topKey]:
-                    if "regionMap" in content[topKey]["screenSamplerInfo"]:
-                        regions = 0
-                        for region in content[topKey]["screenSamplerInfo"]["regionMap"]:
-                            regions = regions + 1
-
-                        if regions == 18:
-                            for region in content[topKey]["screenSamplerInfo"]["regionMap"]:
-                                this = content[topKey]["screenSamplerInfo"]["regionMap"][region]
-                                thisName = this["name"]
-                                if thisName in tops:
-                                    this["top"] = tops[thisName]
-                                    this["bottom"] = bottoms[thisName]
-                                    this["left"] = lefts[thisName]
-                                    this["right"] = rights[thisName]
-                            totalSamplerEffectsChanged = totalSamplerEffectsChanged + 1
-                            # continue the loop changing all 18-segment screen samplers with the correct names
-
-        # After changing everything, create a file with the modified preferences:                            
-        with open( prefDataMod, 'w' ) as j:
-        # with open( prefDataMod, mode='w', encoding='utf-8' ) as j:
-            json.dump( content, j, indent = 2, ensure_ascii=False )
-            return totalSamplerEffectsChanged
-    print("Encountered a read or write error with the editable preference files.\n")
-    return -1
-    
 def add_sample_regions(prefData, prefDataMod):
     with open(prefData) as f:
         content = json.load(f)
@@ -300,6 +265,43 @@ def add_sample_regions(prefData, prefDataMod):
     print("Encountered a read or write error with the editable preference files.\n")
     return -1
 
+
+def modify_sample_regions(prefData, prefDataMod):
+    with open(prefData) as f:
+        content = json.load(f)
+    
+        totalSamplerEffectsChanged = 0
+        
+        for topKey in content:
+            if "lighting_effects" in topKey:
+                if "screenSamplerInfo" in content[topKey]:
+                    if "regionMap" in content[topKey]["screenSamplerInfo"]:
+                        regions = 0
+                        
+                        for region in content[topKey]["screenSamplerInfo"]["regionMap"]:
+                            regions = regions + 1
+
+                        if regions == 18:
+                            for region in content[topKey]["screenSamplerInfo"]["regionMap"]:
+                                this = content[topKey]["screenSamplerInfo"]["regionMap"][region]
+                                thisName = this["name"]
+                                if thisName in tops:
+                                    this["top"] = tops[thisName]
+                                    this["bottom"] = bottoms[thisName]
+                                    this["left"] = lefts[thisName]
+                                    this["right"] = rights[thisName]
+                            totalSamplerEffectsChanged = totalSamplerEffectsChanged + 1
+                            # continue the loop changing all 18-segment screen samplers with the correct names
+
+        # After changing everything, create a file with the modified preferences:                            
+        with open( prefDataMod, 'w' ) as j:
+        # with open( prefDataMod, mode='w', encoding='utf-8' ) as j:
+            json.dump( content, j, indent = 2, ensure_ascii=False )
+            return totalSamplerEffectsChanged
+    print("Encountered a read or write error with the editable preference files.\n")
+    return -1
+    
+    
 if __name__ == '__main__':
     if not os.path.exists(DEFAULT_PATH_SETTINGS_DB):
         failure_to_find_settings_db = """
@@ -391,7 +393,6 @@ Step 6: **Completely quit G Hub.** Don't just close the window!
         sqTop = sqBot - gridSize + scanMargin
         for col in range(6): # 0-5
             sqLft = hScale * gridSize * col + scanShift
-            #sqRit = sqLft + gridSize
             sqRit = hScale * (gridSize * (col + 1) - scanMargin) + scanShift
             key = "wl" + str(row+1) + str(col+1)        
             tops[key] = sqTop / heightScr
@@ -421,8 +422,8 @@ Step 6: **Completely quit G Hub.** Don't just close the window!
         addCount = add_sample_regions(file_written, file_extended)
     
         if addCount < 0 or addCount != edit5Regions:
-            print("addCount = "+str(addCount))
-            print("edit5Regions = "+str(edit5Regions))
+            print("addCount = " + str(addCount))
+            print("edit5Regions = " + str(edit5Regions))
             print("\nDue to the error, the G Hub settings will be left unmodified.\n")
             exit(addCount)
     
@@ -436,7 +437,7 @@ Step 6: **Completely quit G Hub.** Don't just close the window!
     
     if samplesChanged > 0:
         insert_blob(latest_id, file_modded, DEFAULT_PATH_SETTINGS_DB)
-        print("\nThe G Hub settings have been updated. You can restart G Hub now.\n")
+        print("\nThe G Hub settings have been updated. Restart G Hub and enjoy.\n")
     else:
         print("\nThe G Hub settings have been left unmodified.\n")
         
